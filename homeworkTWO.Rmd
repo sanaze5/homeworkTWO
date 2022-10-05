@@ -22,54 +22,83 @@ tidymodels_prefer()
 ```{r}
 
 library(readr)
-data <- read_csv("abalone.csv")
-data
+abalone <- read_csv("abalone.csv")
+abalone
 
 ```
 Question one
 ```{r}
-abalone$age <- abalone$rings + 1.5
-abalone$age
-finalabalone <- cbind(abalone,abalone$age)
-finalabalone
+abalone <- abalone%>%
+  mutate(age = (rings + 1.5))
+abalone
+
+age_hist_dist <- ggplot(abalone,aes(x=age))+geom_histogram()
+age_hist_dist
 ```
+The distribution of age has one peak unimodel and is also right skew.
 
 Question two
 ```{r}
 set.seed(5555)
-abalone_split <- initial_split(finalabalone, prop = 0.8,
-                               strata=rings)
+abalone_split <- initial_split(abalone, prop = 0.8,
+                               strata=age) # use age outcome variable
 abalone_train <- training(abalone_split)
 abalone_test <- testing(abalone_split)
-?initial_split
+
 
 ```
 Question Three
 ```{r}
-simple_abalone_recipe <- recipe(rings ~., data = abalone_train)
-simple_abalone_recipe
-#how to take rings out
-abalone_recipe <- recipe(rings ~., data = abalone_train) %>%
-  step_dummy(all_nominal_predictors())
-?diamonds
-tidymodels_packages(include_self = TRUE)
+abalone_train2 <- abalone_train[,!names(abalone_train)%in%c("rings")]
 
-step_center()
-step_scale()
+abalone_recipe <- recipe(age ~., data = abalone_train2) %>%
+  step_dummy(all_nominal_predictors()) %>%
+#tidymodels_packages(include_self = TRUE)
+  step_interact(terms = ~ starts_with("type"):shucked_weight + longest_shell:diameter+ shucked_weight:shell_weight)%>%
+  step_center(all_predictors())%>%
+  step_scale(all_predictors())
 ```
 Question Four
 ```{r}
-lm_model_abalone <- linear_reg()%>%
-  set_engine('lm')
+lm_model_abalone <- linear_reg() %>%
+  set_engine("lm")
 ```
 Question Five
 ```{r}
 lm_workflow_abalone <- workflow() %>%
-  addmodel(lm_model_abalone)%>%
+  add_model(lm_model_abalone)%>%
   add_recipe(abalone_recipe)
 ```
 Question Six 
 ```{r}
+lm_fit_abalone <- fit(lm_workflow_abalone, abalone_train2)
+lm_fit_abalone
+
+lm_fit_abalone %>%
+  extract_fit_parsnip() %>%
+  tidy()
+```
+Question Seven
+```{r}
+library(yardstick)
+#one 
+abalone_metrics <- metric_set(rmse,rsq,mae)
+abalone_metrics
+
+abalone_train_res <- predict(lm_fit_abalone, new_data = abalone_train2 %>% select(-age))
+abalone_train_res %>%
+  head()
+
+abalone_train_res <- bind_cols(abalone_train_res, abalone_train %>% select(age))
+abalone_train_res %>%
+  head()
+
+
+abalone_metrics(abalone_train_res, truth=age,
+                estimate=.pred)
+
 
 ```
+
+54.5% of the variability in age is explained by the relationship between age and the predictors.
 
