@@ -1,0 +1,75 @@
+---
+title: "homeworktwo"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(tidymodels)
+library(corrplot)
+library(ggthemes)
+tidymodels_prefer()
+```
+
+
+```{r}
+
+library(readr)
+data <- read_csv("abalone.csv")
+data
+
+```
+Question one
+```{r}
+abalone$age <- abalone$rings + 1.5
+abalone$age
+finalabalone <- cbind(abalone,abalone$age)
+finalabalone
+```
+
+Question two
+```{r}
+set.seed(5555)
+abalone_split <- initial_split(finalabalone, prop = 0.8,
+                               strata=rings)
+abalone_train <- training(abalone_split)
+abalone_test <- testing(abalone_split)
+?initial_split
+
+```
+Question Three
+```{r}
+simple_abalone_recipe <- recipe(rings ~., data = abalone_train)
+simple_abalone_recipe
+#how to take rings out
+abalone_recipe <- recipe(rings ~., data = abalone_train) %>%
+  step_dummy(all_nominal_predictors())
+?diamonds
+tidymodels_packages(include_self = TRUE)
+
+step_center()
+step_scale()
+```
+Question Four
+```{r}
+lm_model_abalone <- linear_reg()%>%
+  set_engine('lm')
+```
+Question Five
+```{r}
+lm_workflow_abalone <- workflow() %>%
+  addmodel(lm_model_abalone)%>%
+  add_recipe(abalone_recipe)
+```
+Question Six 
+```{r}
+
+```
+
