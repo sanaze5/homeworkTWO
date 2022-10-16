@@ -33,16 +33,18 @@ Question one
 abalone <- abalone%>%
   mutate(age = (rings + 1.5))
 abalone
-
+# creating equation for age so that we can put new column in data
 age_hist_dist <- ggplot(abalone,aes(x=age))+geom_histogram()
 age_hist_dist
+#  creating hist for age with ggplot function
 ```
 At first I did not use mutate here because I thought I should merge age into the data however that can be problematic because it can start repeating the age column into the data every time we run it. That is why I used mutate so that age only shows up once and never again. Then I had to actually create an equation for what we wanted to use as the age so that the predictions would work further on.
-The distribution of age has one peak uni model and is also right skew.The peak is around 11 years of age and most of the data is shown to be between 8-13 years of age.
+The distribution of age has one peak (uni model) and is also right skew.The peak is around 11 years of age and most of the data is shown to be between 8-13 years of age.
 
 Question two
 ```{r}
 set.seed(5555)
+#setting the seed so we can replicate our results 
 abalone_split <- initial_split(abalone, prop = 0.8,
                                strata=age) # use age outcome variable
 abalone_train <- training(abalone_split)
@@ -54,37 +56,42 @@ This code is new to me however we are splitting the data into the training and t
 Question Three
 ```{r}
 abalone_train2 <- abalone_train[,!names(abalone_train)%in%c("rings")]
-
+#extracting rings from our data set
 abalone_recipe <- recipe(age ~., data = abalone_train2) %>%
   step_dummy(all_nominal_predictors()) %>%
+# dummy coding the categorical data so that we can use it moving forward
 #tidymodels_packages(include_self = TRUE)
   step_interact(terms = ~ starts_with("type"):shucked_weight + longest_shell:diameter+ shucked_weight:shell_weight)%>%
   step_center(all_predictors())%>%
   step_scale(all_predictors())
+#step_center makes it so that our data has a mean of 0 and step_scale makes is so that our data has a standard deviation of 1, standardizing our data 
 ```
 Here we are extracting rings from our data because it would ruin our prediction. If we knew the rings we would know the age of the abalone and it would already be dead and opened up. 
 Question Four
 ```{r}
 lm_model_abalone <- linear_reg() %>%
   set_engine("lm")
+#creating the linear regression model
 ```
 Question Five
 ```{r}
 lm_workflow_abalone <- workflow() %>%
   add_model(lm_model_abalone)%>%
   add_recipe(abalone_recipe)
+# workflow connects the model and the recipe 
 ```
 
 Question Six
 ```{r}
 lm_fit_abalone <- fit(lm_workflow_abalone, abalone_train2)
 lm_fit_abalone
-
+# fitting the model to a linear regression
 lm_fit_abalone %>%
   extract_fit_parsnip() %>%
   tidy()
 specific_data <- tibble(longest_shell=0.50,diameter=0.10,height=0.30,whole_weight=4,shucked_weight=1,viscera_weight=2,shell_weight=1,type="F")
 predict(lm_fit_abalone,specific_data)
+#using the fitted model to predict a value
 ```
 Question Seven
 ```{r}
@@ -92,20 +99,20 @@ library(yardstick)
 #one 
 abalone_metrics <- metric_set(rmse,rsq,mae)
 abalone_metrics
-
+#specifying what metrics we want
+#two
 abalone_train_res <- predict(lm_fit_abalone, new_data = abalone_train2 %>% select(-age))
 abalone_train_res %>%
   head()
-
+#applying the metric set to predicted values
 abalone_train_res <- bind_cols(abalone_train_res, abalone_train %>% select(age))
 abalone_train_res %>%
   head()
-
-
+# binding age and predicted age column so we can compare
+#three
 abalone_metrics(abalone_train_res, truth=age,
                 estimate=.pred)
-
-
+#getting the metric values of the training data
 ```
 The rmse is 2.1695, the rsq is .5451 and the mae is 1.5525.
 54.5% of the variability in age is explained by the relationship between age and the predictors.
