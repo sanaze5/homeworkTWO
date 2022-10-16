@@ -1,0 +1,26 @@
+---
+title: "lab2"
+output: html_document
+---
+
+
+
+```{r}
+dim(diamonds
+    )
+```
+
+```{r}
+diamonds %>%
+  select(is.numeric)%>% 
+  
+```
+
+```{r}
+diamonds%>%
+  ggplot(aes(x=price,y=reorder(cut,price),fill =color ))+
+  geom_boxplot()
+labs(y="Cut",x="Price")+
+  theme_bw()
+```
+

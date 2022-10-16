@@ -26,6 +26,8 @@ abalone <- read_csv("abalone.csv")
 abalone
 
 ```
+We start by importing the data into R and then assigning it to abalone so that we can use the data further down. 
+
 Question one
 ```{r}
 abalone <- abalone%>%
@@ -35,7 +37,8 @@ abalone
 age_hist_dist <- ggplot(abalone,aes(x=age))+geom_histogram()
 age_hist_dist
 ```
-The distribution of age has one peak unimodel and is also right skew.
+At first I did not use mutate here because I thought I should merge age into the data however that can be problematic because it can start repeating the age column into the data every time we run it. That is why I used mutate so that age only shows up once and never again. Then I had to actually create an equation for what we wanted to use as the age so that the predictions would work further on.
+The distribution of age has one peak uni model and is also right skew.The peak is around 11 years of age and most of the data is shown to be between 8-13 years of age.
 
 Question two
 ```{r}
@@ -45,8 +48,9 @@ abalone_split <- initial_split(abalone, prop = 0.8,
 abalone_train <- training(abalone_split)
 abalone_test <- testing(abalone_split)
 
-
 ```
+This code is new to me however we are splitting the data into the training and testing areas with a proportion of 0.8 because we commonly use values between 0.7-0.8. We are also mostly interested in our test data not our training data because it is used to our data and could be over fitted. 
+
 Question Three
 ```{r}
 abalone_train2 <- abalone_train[,!names(abalone_train)%in%c("rings")]
@@ -58,6 +62,7 @@ abalone_recipe <- recipe(age ~., data = abalone_train2) %>%
   step_center(all_predictors())%>%
   step_scale(all_predictors())
 ```
+Here we are extracting rings from our data because it would ruin our prediction. If we knew the rings we would know the age of the abalone and it would already be dead and opened up. 
 Question Four
 ```{r}
 lm_model_abalone <- linear_reg() %>%
@@ -69,7 +74,8 @@ lm_workflow_abalone <- workflow() %>%
   add_model(lm_model_abalone)%>%
   add_recipe(abalone_recipe)
 ```
-Question Six 
+
+Question Six
 ```{r}
 lm_fit_abalone <- fit(lm_workflow_abalone, abalone_train2)
 lm_fit_abalone
@@ -77,6 +83,8 @@ lm_fit_abalone
 lm_fit_abalone %>%
   extract_fit_parsnip() %>%
   tidy()
+specific_data <- tibble(longest_shell=0.50,diameter=0.10,height=0.30,whole_weight=4,shucked_weight=1,viscera_weight=2,shell_weight=1,type="F")
+predict(lm_fit_abalone,specific_data)
 ```
 Question Seven
 ```{r}
@@ -99,6 +107,6 @@ abalone_metrics(abalone_train_res, truth=age,
 
 
 ```
-
+The rmse is 2.1695, the rsq is .5451 and the mae is 1.5525.
 54.5% of the variability in age is explained by the relationship between age and the predictors.
 
